@@ -7,62 +7,109 @@
 // npm install --save-dev gulp-autoprefixer
 // npm install --save-dev browser-sync --msvs_version=2013
 // npm install --save-dev gulp-eslint
+// npm install --save-dev gulp-concat
 // eslint --init
 // npm install --save-dev gulp-jasmine-phantom
 // Require phantomjs
-
 
 var gulp = require('gulp');
 var sass = require('gulp-sass');
 var autoprefixer = require('gulp-autoprefixer');
 var browserSync = require('browser-sync').create();
 var eslint = require('gulp-eslint');
+var concat = require('gulp-concat');
 // var jasmine = require('gulp-jasmine-phantom');
 
 
-gulp.task('default', ['styles', 'lint'], function () {
+gulp.task('default', ['copy-index', 'copy-images', 'scripts', 'sass-styles', 'es-lint'], function () {
+    // Watch for changes. sass styles, index, images and javascripts
+    gulp.watch('src/sass/**/*.scss', ['sass-styles'])
+        .on('change', function (event) { console.log('sass-styles: File: ' + event.path + ' was ' + event.type + ', running tasks...'); });
+    gulp.watch('src/index.html', ['copy-index'])
+        .on('change', function (event) { console.log('copy-index ' + event.path + ' was ' + event.type + ', running tasks...'); });
+    gulp.watch('src/img/**/*', ['copy-images'])
+        .on('change', function (event) { console.log('copy-images ' + event.path + ' was ' + event.type + ', running tasks...'); });
+    gulp.watch('src/js/**/*.js', ['scripts'])
+        .on('change', function (event) { console.log('scripts ' + event.path + ' was ' + event.type + ', running tasks...'); });
+
+    // eslint watch src. Could pipe Browser-sync reload onto that
+    gulp.watch('./src/js/**/*.js', ['es-lint']);
 
     browserSync.init({
-        server: './'
+        server: {
+            baseDir: './dist',
+            index: 'index.html'
+        }
+
     });
-
-    // Sass watch.
-    gulp.watch('sass/**/*.scss', ['styles'])
-        .on('change', function (event) {
-            console.log('File' + event.path + ' was ' + event.type + ', running tasks...');
-        });
-
-    // eslint watch. Could pipe Browser-sync reload onto that
-    gulp.watch('js/**/*.js', ['lint']);
-    // Browser-sync watch. index.html and js files.
-    gulp.watch('index.html').on('change', browserSync.reload);
-    gulp.watch('js/**/*.js').on('change', browserSync.reload);
-
+	/*
+	browserSync.init({
+        proxy: 'localhost:3000',
+    });
+	*/
+    // Browser-sync watch dist. index.html and js files.
+    gulp.watch('./dist/js/**/*.js').on('change', browserSync.reload);
+    gulp.watch('./dist/index.html').on('change', browserSync.reload);
+    gulp.watch('./dist/img/**/*').on('change', browserSync.reload);
 });
 
-gulp.task('styles', function () {
-
-    return gulp.src('sass/**/*.scss')
+// Process scss into css file.
+// pipes: print error -> web-kit autoprefixer -> compress/minify -> output to destination -> browserSync stream
+gulp.task('sass-styles', function () {
+    return gulp.src('src/sass/**/*.scss')
         .pipe(sass().on('error', sass.logError))
         .pipe(autoprefixer({
             browsers: ['last 2 versions']
         }))
-        .pipe(gulp.dest('./css'))
+        .pipe(sass({
+            outputStyle: 'compressed'
+        }))
+        .pipe(gulp.dest('dist/css'))
         .pipe(browserSync.stream());
-
 });
-
-gulp.task('lint', function () {
-
-    return gulp.src(['js/**/*.js'])
+// JavaScript linting using es-lint.
+gulp.task('es-lint', function () {
+    return gulp.src(['src/js/**/*.js'])
         .pipe(eslint())
         .pipe(eslint.format())
         .pipe(eslint.failOnError());
-
 });
 
-// gulp.task('tests', function () {
+gulp.task('scripts', function () {
+    gulp.src('src/js/**/*.js')
+        .pipe(concat('javascript.js'))
+        .pipe(gulp.dest('dist/js'));
+});
 
+// Move files to dist folder
+gulp.task('copy-index', function () {
+    gulp.src('src/index.html')
+        .pipe(gulp.dest('./dist'));
+});
+gulp.task('copy-images', function () {
+    gulp.src('src/img/*')
+        .pipe(gulp.dest('dist/img'));
+});
+
+// Build js for deploy. Minify 'scripts' task
+gulp.task('deploy-scripts', function () {
+    gulp.src('src/js/**/*.js')
+        .pipe(concat('javascript.js'))
+        .pipe(uglify())
+        .pipe(gulp.dest('dist/js'));
+});
+
+// Builds all stuffs for deployment
+// Only minified js for now. Maybe delete all useless stuffs in future
+gulp.task('deploy',[
+    'copy-index',
+    'copy-images',
+    'sass-styles',
+    'es-lint',
+    'deploy-scripts'
+]);
+
+// gulp.task('tests', function(){
 //     return gulp.src('tests/spec/extraSpec.js')
 //         .pipe(jasmine({
 //             integration: true,
