@@ -1,5 +1,5 @@
 /*eslint-env node */
-// INSTALL
+// INSTALL some tools
 // npm install --global gulp-cli
 // Skip if already installed
 // npm install --save-dev gulp
@@ -8,9 +8,12 @@
 // npm install --save-dev browser-sync --msvs_version=2013
 // npm install --save-dev gulp-eslint
 // npm install --save-dev gulp-concat
+// npm install --save-dev gulp-imagemin
+// npm install --save-dev imagemin-pngquant
+// npm install --save-dev gulp-uglify
+
+// Sets eslint standards
 // eslint --init
-// npm install --save-dev gulp-jasmine-phantom
-// Require phantomjs
 
 var gulp = require('gulp');
 var sass = require('gulp-sass');
@@ -18,7 +21,9 @@ var autoprefixer = require('gulp-autoprefixer');
 var browserSync = require('browser-sync').create();
 var eslint = require('gulp-eslint');
 var concat = require('gulp-concat');
-// var jasmine = require('gulp-jasmine-phantom');
+var imagemin = require('gulp-imagemin');
+var pngquant = require('imagemin-pngquant');
+var uglify = require('gulp-uglify');
 
 
 gulp.task('default', ['copy-index', 'copy-images', 'scripts', 'sass-styles', 'es-lint'], function () {
@@ -91,6 +96,7 @@ gulp.task('copy-images', function () {
         .pipe(gulp.dest('dist/img'));
 });
 
+
 // Build js for deploy. Minify 'scripts' task
 gulp.task('deploy-scripts', function () {
     gulp.src('src/js/**/*.js')
@@ -98,22 +104,20 @@ gulp.task('deploy-scripts', function () {
         .pipe(uglify())
         .pipe(gulp.dest('dist/js'));
 });
-
+gulp.task('deploy-images', function () {
+    gulp.src('src/img/*')
+        .pipe(imagemin({
+            progressive: true,
+            use: [pngquant()]
+        }))
+        .pipe(gulp.dest('dist/img'));
+});
 // Builds all stuffs for deployment
 // Only minified js for now. Maybe delete all useless stuffs in future
-gulp.task('deploy',[
+gulp.task('deploy', [
     'copy-index',
-    'copy-images',
+    'deploy-images',
     'sass-styles',
     'es-lint',
     'deploy-scripts'
 ]);
-
-// gulp.task('tests', function(){
-//     return gulp.src('tests/spec/extraSpec.js')
-//         .pipe(jasmine({
-//             integration: true,
-//             jasmineVersion: '2.4',
-//             vendor: 'js/**/*.js'
-//         }));
-// });
