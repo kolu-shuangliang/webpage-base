@@ -1,16 +1,15 @@
 /*eslint-env node */
-// INSTALL some tools
-// npm install --global gulp-cli
-// Skip if already installed
-// npm install --save-dev gulp
-// npm install --save-dev gulp-sass
-// npm install --save-dev gulp-autoprefixer
-// npm install --save-dev browser-sync --msvs_version=2013
-// npm install --save-dev gulp-eslint
-// npm install --save-dev gulp-concat
-// npm install --save-dev gulp-imagemin
-// npm install --save-dev imagemin-pngquant
-// npm install --save-dev gulp-uglify
+// INSTALL following npm packages or use npm install with package.json
+// gulp
+// gulp-cli
+// gulp-sass
+// gulp-autoprefixer
+// browser-sync --msvs_version=2013
+// gulp-eslint
+// gulp-concat
+// gulp-imagemin
+// imagemin-pngquant
+// gulp-uglify
 
 // Sets eslint standards
 // eslint --init
