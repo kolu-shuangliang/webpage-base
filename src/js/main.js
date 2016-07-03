@@ -5,4 +5,4 @@ function getWindowHeight() {
     
 }
 
-getWindowHeight();
+console.log( getWindowHeight() );
