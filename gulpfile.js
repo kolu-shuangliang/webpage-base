@@ -2,21 +2,10 @@
 // REQUIRE
 // npm install --global gulp-cli
 
-// INSTALL following npm packages or use npm install with package.json
-// gulp
-// gulp-sass
-// gulp-autoprefixer
-// browser-sync --msvs_version=2013
-// gulp-eslint
-// gulp-concat
-// gulp-imagemin
-// imagemin-pngquant
-// gulp-uglify
-
 // Sets eslint standards
 // eslint --init
 
-// uglify don't seems to work with ES6 stufsf yet.
+// uglify don't seems to work with ES6 stuffs yet.
 
 var gulp = require('gulp');
 var sass = require('gulp-sass');
@@ -28,10 +17,9 @@ var imagemin = require('gulp-imagemin');
 var jpegtran = require('imagemin-jpegtran');
 var pngquant = require('imagemin-pngquant');
 var uglify = require('gulp-uglify');
-var clean = require('gulp-clean');
 
-var dist = './dist';
-var deployLocation = './';
+var devLocation = './devLocation';
+var deployLocation = './dist';
 
 gulp.task('default', ['copy-html', 'copy-images', 'scripts', 'sass-styles', 'es-lint'], function () {
     // Watch for changes. sass styles, index, images and javascripts
@@ -49,7 +37,7 @@ gulp.task('default', ['copy-html', 'copy-images', 'scripts', 'sass-styles', 'es-
 
     browserSync.init({
         server: {
-            baseDir: dist,
+            baseDir: devLocation,
             index: 'index.html'
         }
 
@@ -59,14 +47,11 @@ gulp.task('default', ['copy-html', 'copy-images', 'scripts', 'sass-styles', 'es-
         proxy: 'localhost:3000',
     });
     */
-    // Browser-sync watch dist. index.html and js files.
-    gulp.watch(dist + '/js/**/*.js').on('change', browserSync.reload);
-    gulp.watch(dist + '/index.html').on('change', browserSync.reload);
-    gulp.watch(dist + '/img/**/*').on('change', browserSync.reload);
+    gulp.watch(devLocation + '/**/*.html').on('change', browserSync.reload);
+    gulp.watch(devLocation + '/css/**/*.css').on('change', browserSync.reload);
+    gulp.watch(devLocation + '/js/**/*.js').on('change', browserSync.reload);
+    gulp.watch(devLocation + '/img/**/*').on('change', browserSync.reload);
 });
-
-// Process scss into css file.
-// pipes: print error -> web-kit autoprefixer -> compress/minify -> output to destination -> browserSync stream
 gulp.task('sass-styles', function () {
     return gulp.src('src/sass/**/*.scss')
         .pipe(sass().on('error', sass.logError))
@@ -76,36 +61,33 @@ gulp.task('sass-styles', function () {
         .pipe(sass({
             outputStyle: 'compressed'
         }))
-        .pipe(gulp.dest(dist + '/css'))
-        .pipe(browserSync.stream());
+        .pipe(gulp.dest(devLocation + '/css'));
 });
-// JavaScript linting using es-lint.
 gulp.task('es-lint', function () {
     return gulp.src(['src/js/**/*.js'])
         .pipe(eslint())
         .pipe(eslint.format())
         .pipe(eslint.failOnError());
 });
-
 gulp.task('scripts', function () {
-    gulp.src('src/js/**/*.js')
+    return gulp.src('src/js/**/*.js')
         .pipe(concat('javascript.js'))
-        .pipe(gulp.dest(dist + '/js'));
+        .pipe(gulp.dest(devLocation + '/js'));
 });
-// Move files to dist folder
 gulp.task('copy-html', function () {
-    gulp.src('src/**/*.html')
-        .pipe(gulp.dest(dist));
+    return gulp.src('src/**/*.html')
+        .pipe(gulp.dest(devLocation));
 });
 gulp.task('copy-images', function () {
-    gulp.src('src/img/*')
-        .pipe(gulp.dest(dist + '/img'));
+    return gulp.src('src/img/*')
+        .pipe(gulp.dest(devLocation + '/img'));
 });
 
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
 // TODO: Minify later
 gulp.task('deploy-html', function () {
-    gulp.src('src/**/*.html')
+    return gulp.src('src/**/*.html')
         .pipe(gulp.dest(deployLocation));
 });
 gulp.task('deploy-styles', function () {
@@ -120,7 +102,7 @@ gulp.task('deploy-styles', function () {
         .pipe(gulp.dest(deployLocation + '/css'));
 });
 gulp.task('deploy-images-png', function () {
-    gulp.src(['src/img/**/*.png', 'src/img/**/*.PNG'])
+    return gulp.src(['src/img/**/*.png', 'src/img/**/*.PNG'])
         .pipe(imagemin({
             progressive: true,
             use: [pngquant()]
@@ -128,7 +110,7 @@ gulp.task('deploy-images-png', function () {
         .pipe(gulp.dest(deployLocation + '/img'));
 });
 gulp.task('deploy-images-jpg', function () {
-    gulp.src(['src/img/**/*.jpg', 'src/img/**/*.jpeg'])
+    return gulp.src(['src/img/**/*.jpg', 'src/img/**/*.jpeg'])
         .pipe(imagemin({
             progressive: true,
             use: [jpegtran()]
@@ -136,7 +118,7 @@ gulp.task('deploy-images-jpg', function () {
         .pipe(gulp.dest(deployLocation + '/img'));
 });
 gulp.task('deploy-scripts', function () {
-    gulp.src('src/js/**/*.js')
+    return gulp.src('src/js/**/*.js')
         .pipe(concat('javascript.js'))
         .pipe(uglify())
         .pipe(gulp.dest(deployLocation + '/js'));
@@ -151,8 +133,3 @@ gulp.task('deploy', [
     'deploy-images-jpg',
     'deploy-scripts'
 ]);
-
-gulp.task('clean-deploy', function () {
-    return gulp.src(['./index.html', './js', './css', './subpages', './images'])
-        .pipe(clean());
-});
